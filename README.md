@@ -26,7 +26,7 @@ The daemon is installed as a LaunchAgent so it starts automatically on login and
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/logi-options-wake-fix.git
+git clone https://github.com/pavelzaichyk/logi-options-plus-wake-fix.git
 cd logi-options-wake-fix
 bash install.sh
 ```
