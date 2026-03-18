@@ -6,20 +6,7 @@ setbuf(stdout, nil)
 
 let uid = getuid()
 var lastRestartTime: Date = .distantPast
-let minEventInterval: TimeInterval = 30
-
-func kickAgent(label: String) {
-    let task = Process()
-    task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-    task.arguments = ["kickstart", "-k", "gui/\(uid)/com.logi.cp-dev-mgr"]
-    do {
-        try task.run()
-        task.waitUntilExit()
-        print("[\(Date())] [\(label)] Restart complete (exit code: \(task.terminationStatus))")
-    } catch {
-        print("[\(Date())] [\(label)] Restart failed: \(error)")
-    }
-}
+let minEventInterval: TimeInterval = 10
 
 func restartLogiAgent(reason: String) {
     let now = Date()
@@ -28,15 +15,21 @@ func restartLogiAgent(reason: String) {
         return
     }
     lastRestartTime = now
-    print("[\(now)] Event: \(reason) — starting two-phase restart...")
+    print("[\(now)] Event: \(reason) — restarting logioptionsplus_agent in 3s...")
 
-    // Phase 1: restart after 3s (lets USB/Bluetooth stack settle)
+    // Wait for USB/Bluetooth stack to settle
     Thread.sleep(forTimeInterval: 3)
-    kickAgent(label: "1st")
 
-    // Phase 2: restart again after 30s (safety net for full device re-initialization)
-    Thread.sleep(forTimeInterval: 30)
-    kickAgent(label: "2nd")
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+    task.arguments = ["kickstart", "-k", "gui/\(uid)/com.logi.cp-dev-mgr"]
+    do {
+        try task.run()
+        task.waitUntilExit()
+        print("[\(Date())] Restart complete (exit code: \(task.terminationStatus))")
+    } catch {
+        print("[\(Date())] Restart failed: \(error)")
+    }
 }
 
 let workspace = NSWorkspace.shared
