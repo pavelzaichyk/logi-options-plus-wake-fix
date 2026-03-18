@@ -51,7 +51,7 @@ launchctl list | grep logi-wake
 
 After your next sleep/wake or user switch, check the log:
 ```bash
-cat /tmp/logi-wake-watcher.log
+cat ~/Library/Logs/logi-wake-watcher.log
 ```
 
 You should see something like:
@@ -59,6 +59,8 @@ You should see something like:
 [2026-03-17 14:55:39 +0000] Event: session became active — restarting logioptionsplus_agent in 1s...
 [2026-03-17 14:55:41 +0000] Restart complete (exit code: 0)
 ```
+
+Logs are stored per-user in `~/Library/Logs/` and are also visible in **Console.app**.
 
 ## How it works
 

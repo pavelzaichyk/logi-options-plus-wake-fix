@@ -11,8 +11,8 @@
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/logi-wake-watcher.log</string>
+    <string>LOG_PATH</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/logi-wake-watcher.err</string>
+    <string>ERR_PATH</string>
 </dict>
 </plist>
