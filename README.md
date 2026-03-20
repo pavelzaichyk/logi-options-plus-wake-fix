@@ -27,14 +27,17 @@ The daemon is installed as a LaunchAgent so it starts automatically on login and
 
 ```bash
 git clone https://github.com/pavelzaichyk/logi-options-plus-wake-fix.git
-cd logi-options-wake-fix
+cd logi-options-plus-wake-fix
 bash install.sh
 ```
 
 The script will:
 1. Compile the Swift daemon with `swiftc`
 2. Install the binary to `~/.local/bin/logi-wake-watcher`
-3. Install and load the LaunchAgent from `~/Library/LaunchAgents/`
+3. Add a sudoers entry so the daemon can restart the system-level updater service without a password prompt
+4. Install and load the LaunchAgent from `~/Library/LaunchAgents/`
+
+> `sudo` is required during install to configure the sudoers entry.
 
 ## Uninstall
 
@@ -56,8 +59,9 @@ cat ~/Library/Logs/logi-wake-watcher.log
 
 You should see something like:
 ```
-[2026-03-17 14:55:39 +0000] Event: session became active — restarting logioptionsplus_agent in 1s...
-[2026-03-17 14:55:41 +0000] Restart complete (exit code: 0)
+[2026-03-17 14:55:39 +0000] Event: session became active — restarting Logi services...
+[2026-03-17 14:55:42 +0000] Updater restart (exit code: 0)
+[2026-03-17 14:55:44 +0000] Agent restart (exit code: 0)
 ```
 
 Logs are stored per-user in `~/Library/Logs/` and are also visible in **Console.app**.
@@ -71,4 +75,10 @@ install.sh                        — compile + install
 uninstall.sh                      — remove everything
 ```
 
-The daemon calls `launchctl kickstart -k gui/<uid>/com.logi.cp-dev-mgr` which kills and restarts the Logi agent. A 1-second delay is added before the restart to let the session fully initialize. A 10-second debounce prevents double-restarts when multiple events fire at once.
+On each event the daemon:
+1. Waits 3 seconds for the USB/Bluetooth stack to settle
+2. Restarts the system-level updater (`sudo launchctl kickstart -k system/com.logi.optionsplus.updater`) — its stale IPC state is what causes the purple loading screen
+3. Waits 2 seconds for the updater to come up
+4. Restarts the user agent (`launchctl kickstart -k gui/<uid>/com.logi.cp-dev-mgr`)
+
+A 10-second debounce prevents double-restarts when multiple events fire at once.

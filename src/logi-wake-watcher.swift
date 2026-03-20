@@ -8,6 +8,20 @@ let uid = getuid()
 var lastRestartTime: Date = .distantPast
 let minEventInterval: TimeInterval = 10
 
+func run(_ executable: String, _ arguments: [String]) -> Int32 {
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: executable)
+    task.arguments = arguments
+    do {
+        try task.run()
+        task.waitUntilExit()
+        return task.terminationStatus
+    } catch {
+        print("[\(Date())] Failed to run \(executable): \(error)")
+        return -1
+    }
+}
+
 func restartLogiAgent(reason: String) {
     let now = Date()
     guard now.timeIntervalSince(lastRestartTime) > minEventInterval else {
@@ -15,21 +29,21 @@ func restartLogiAgent(reason: String) {
         return
     }
     lastRestartTime = now
-    print("[\(now)] Event: \(reason) — restarting logioptionsplus_agent in 3s...")
+    print("[\(now)] Event: \(reason) — restarting Logi services...")
 
     // Wait for USB/Bluetooth stack to settle
     Thread.sleep(forTimeInterval: 3)
 
-    let task = Process()
-    task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-    task.arguments = ["kickstart", "-k", "gui/\(uid)/com.logi.cp-dev-mgr"]
-    do {
-        try task.run()
-        task.waitUntilExit()
-        print("[\(Date())] Restart complete (exit code: \(task.terminationStatus))")
-    } catch {
-        print("[\(Date())] Restart failed: \(error)")
-    }
+    // Restart the system-level updater first — its stale IPC state blocks agent startup
+    let updaterExit = run("/usr/bin/sudo", ["launchctl", "kickstart", "-k", "system/com.logi.optionsplus.updater"])
+    print("[\(Date())] Updater restart (exit code: \(updaterExit))")
+
+    // Give the updater a moment to come up before the agent tries to connect to it
+    Thread.sleep(forTimeInterval: 2)
+
+    // Restart the user agent
+    let agentExit = run("/bin/launchctl", ["kickstart", "-k", "gui/\(uid)/com.logi.cp-dev-mgr"])
+    print("[\(Date())] Agent restart (exit code: \(agentExit))")
 }
 
 let workspace = NSWorkspace.shared

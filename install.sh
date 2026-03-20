@@ -23,6 +23,13 @@ sed -e "s|BINARY_PATH|$BINARY|g" \
     "$SCRIPT_DIR/com.user.logi-wake-watcher.plist" > "$PLIST_DST"
 echo "    Plist:  $PLIST_DST"
 
+echo "==> Configuring sudoers (allows daemon to restart the Logi updater service)..."
+SUDOERS_FILE="/etc/sudoers.d/logi-wake-watcher"
+echo "$(whoami) ALL=(root) NOPASSWD: /bin/launchctl kickstart -k system/com.logi.optionsplus.updater" \
+    | sudo tee "$SUDOERS_FILE" > /dev/null
+sudo chmod 440 "$SUDOERS_FILE"
+echo "    Sudoers: $SUDOERS_FILE"
+
 echo "==> Loading LaunchAgent..."
 launchctl unload "$PLIST_DST" 2>/dev/null || true
 launchctl load "$PLIST_DST"

@@ -10,5 +10,6 @@ launchctl unload "$PLIST_DST" 2>/dev/null || true
 
 echo "==> Removing files..."
 rm -f "$PLIST_DST" "$BINARY"
+sudo rm -f /etc/sudoers.d/logi-wake-watcher
 
 echo "==> Done."
